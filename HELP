@@ -1,0 +1,32 @@
+usage: pvm [-v | --version] [-? | -h | --help] <command> [<args>]
+
+Command:
+?|h|help                    Show Help
+v|version                   Show Version
+l|list (all|py|python)      List out 10 recent/all virtual environment or all version of python
+s|search (keyword)          Search virtual environment by keyword
+a|activate (venv)           Activate virtual environment
+n|new (venv)                Create new virtual environment
+d|delete (venv)             Delete virtual environment
+i|install (version|l|list)  Install specific version of Python or list of Python that available to download
+u|uninstall (version)       Unintall Python
+
+Before use:
+1. Download Python and use pip to install virtualenv
+2. Add 'alias pvm="source pvm"' to ".bashrc"
+3. Change the path in line 2 of pvm to where the program is
+
+Files Tree Diagram:
+Directory
+  ├─python
+  │   ├─Python-3.8.X
+  │   ├─Python-2.X.X
+  │   └─Python-....
+  ├─venv
+  │   ├─env01
+  │   ├─env02
+  │   └─env03
+  ├─pvm
+  │
+  └─README.md
+

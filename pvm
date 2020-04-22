@@ -1,0 +1,109 @@
+#!/bin/bash
+pvm="$HOME/Workdesk/pvm"
+[ -d "$pvm/python" ] || mkdir "$pvm/python"
+[ -d "$pvm/venv" ] || mkdir "$pvm/venv"
+
+activate() {
+  [ -f "$pvm/venv/$1/bin/activate" ] &&
+    echo -e "\033[93mActivate virtual env: \033[92m$1\033[0m" &&
+    source "$pvm/venv/$1/bin/activate" ||
+    echo -e "\033[93mVirtual env \033[92m$2\033[93m not found\nTry:\n  pvm new "$1" / pvm list / pvm search\033[0m"
+}
+
+newvenv() {
+  if [ -d "$pvm/venv/$1" ]; then
+    echo "$1 already exist"
+  else
+    echo -e "\033[93mCreate virtual env: \033[92m$1\033[93m\nChoose Python Version:"
+    echo ''
+    echo "0: $(python --version | tr ' ' '-') (Now)"
+    lspy=$(ls $pvm/python)
+    echo $lspy | tr ' ' '\n' | awk '{ print NR":", $1 }'
+    echo ''
+    read -p '(Enter to exit)[0-9] ' chosen
+
+    [ "$chosen" = "0" ] && chosenpy="Now"
+    [[ $chosen = [1-9] ]] && chosenpy="$(echo $lspy | cut -d' ' -f$chosen)"
+    if [ ! -z "$chosenpy" ]; then
+      ([ "$chosenpy" = "Now" ] && virtualenv "$pvm/venv/$1" ||
+        virtualenv -q -p="$pvm/python/$chosenpy/python" "$pvm/venv/$1") &&
+        echo -e "Create virtual env: \033[92m$1\033[93m success" &&
+      read -p 'Activate Now?[y/n] ' activate &&
+      ([ -z "$activate" ] || [ "$activate" = "y" ]) &&
+      activate $1
+    fi
+    unset lspy chosen chosenpy
+  fi
+}
+
+list() {
+  [ -z "$1" ] && lsvenv=$(ls -t $pvm/venv | head -10) || lsvenv=$(ls -t $pvm/venv | grep ".*$1.*" | head -10)
+  [ -z "$lsvenv" ] && echo -e "\033[93mVirtual Env Not Found\033[0m\n"  && return 1
+  echo -e "\033[93mList of 10 virtual env\nChoose Virtual Env:"
+  echo ''
+  echo $lsvenv | tr ' ' '\n' | awk '{ print NR-1":", $1 }'
+  echo ''
+  read -p '(Enter to exit)[0-9] ' chosen
+  [[ $chosen = [0-9] ]] && activate $(echo $lsvenv | cut -d' ' -f$(expr $chosen + 1))
+  unset lsvenv chosen
+}
+
+installpy() {
+  if [ -d "$pvm/python/Python-$1" ]; then
+    echo "Python-$1 already exist"
+  else
+    (curl -si "https://www.python.org/ftp/python/$1/Python-$1.tgz" | head -1 | grep 404) &&
+      echo "Python-$1 Not Found" && return 1
+    pwdnow=$(pwd)
+    (
+      echo "Downloading source code from www.python.org..." &&
+      curl -s "https://www.python.org/ftp/python/$1/Python-$1.tgz" --output "$pvm/tmp.tgz"&&
+      echo "Extracting files..." &&
+      tar -zxf "$pvm/tmp.tgz" --directory "$pvm/python/" &&
+      echo "Compiling Python, It may take a bit long depends of you computer..." &&
+      cd "$pvm/python/Python-$1" &&
+      ./configure -s &&
+      make -s &&
+      cd ~-
+    ) || (
+      echo "Fail to Download Python-$1"
+      cd $pwdnow
+      unset pwdnow
+      rm "$pvm/tmp.tgz" >/dev/null
+      rm "$pvm/python/Python-$1" >/dev/null
+    )
+    rm "$pvm/tmp.tgz"
+    echo "Finish Download Python-$1"
+  fi
+}
+
+uninstallpy() {
+  (
+    (rm -r "$pvm/python/Python-$1" && echo "Uninstall Python-$1 success") ||
+    (rm -r "$pvm/python/$1" && echo "Uninstall Python-$1 success")
+  )
+}
+
+case "$1" in
+  \?|-\?|h|-h|--help|help) cat "$pvm/README" ;;
+  v|version|-v|--version) echo "pvm-1.0" ;;
+  l|list)
+    case $2 in
+      py|python) ls "$pvm/python" ;;
+      all) ls "$pvm/venv" ;;
+      *) list ;;
+    esac
+    ;;
+  s|search) list "$2" ;;
+  a|activate) activate $2 ;;
+  n|new) [ ! -z "$2" ] && newvenv "$2" || echo -e "\n\033[93mCreate new virtual env need a name\nExample:\n  pvm new env01\033[0m\n" ;;
+  d|delete) rm -r "$pvm/venv/$2" && echo "Delete virtual env $2 success" ;;
+  i|install)
+    case $2 in
+      l|list) curl -s https://www.python.org/doc/versions/ | grep "Python .\.." | grep -o "\">.*</a>" | grep -v " 1\.."| sed 's/">//g ; s/<\/a>//g' | less ;;
+      *) installpy $2 ;;
+    esac
+    ;;
+  u|uninstall) uninstallpy $2 ;;
+  *) echo -e "\033[91m Error: Unknow option\n \033[93mTry:\n   pvm h or pvm help\n"r; exit 1 ;;
+esac
