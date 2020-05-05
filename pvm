@@ -85,7 +85,7 @@ uninstallpy() {
 }
 
 case "$1" in
-  \?|-\?|h|-h|--help|help) cat "$pvm/README" ;;
+  \?|-\?|h|-h|--help|help) cat "$pvm/HELP" ;;
   v|version|-v|--version) echo "pvm-1.0" ;;
   l|list)
     case $2 in
@@ -105,5 +105,5 @@ case "$1" in
     esac
     ;;
   u|uninstall) uninstallpy $2 ;;
-  *) echo -e "\033[91m Error: Unknow option\n \033[93mTry:\n   pvm h or pvm help\n"r; exit 1 ;;
+  *) echo -e "\033[91m Error: Unknow option\n \033[93mTry:\n   pvm h or pvm help\n"; return 1;;
 esac
