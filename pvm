@@ -1,5 +1,5 @@
 #!/bin/bash
-pvm="$HOME/Workdesk/pvm"
+pvm="$HOME/.config/pvm"
 [ -d "$pvm/python" ] || mkdir "$pvm/python"
 [ -d "$pvm/venv" ] || mkdir "$pvm/venv"
 
@@ -20,7 +20,9 @@ newvenv() {
     lspy=$(ls $pvm/python)
     echo $lspy | tr ' ' '\n' | awk '{ print NR":", $1 }'
     echo ''
-    read -p '(Enter to exit)[0-9] ' chosen
+    [ $ZSH_VERSION  ] &&
+      read '?(Enter to exit)[0-9] ' chosen ||
+      read -p '(Enter to exit)[0-9] ' chosen
 
     [ "$chosen" = "0" ] && chosenpy="Now"
     [[ $chosen = [1-9] ]] && chosenpy="$(echo $lspy | cut -d' ' -f$chosen)"
@@ -28,7 +30,9 @@ newvenv() {
       ([ "$chosenpy" = "Now" ] && virtualenv "$pvm/venv/$1" ||
         virtualenv -q -p="$pvm/python/$chosenpy/python" "$pvm/venv/$1") &&
         echo -e "Create virtual env: \033[92m$1\033[93m success" &&
-      read -p 'Activate Now?[y/n] ' activate &&
+      ( [ $ZSH_VERSION  ] &&
+        read '?Activate Now?[Y/n] ' chosen ||
+        read -p 'Activate Now?[Y/n] ' activate ) &&
       ([ -z "$activate" ] || [ "$activate" = "y" ]) &&
       activate $1
     fi
@@ -43,7 +47,10 @@ list() {
   echo ''
   echo $lsvenv | tr ' ' '\n' | awk '{ print NR-1":", $1 }'
   echo ''
-  read -p '(Enter to exit)[0-9] ' chosen
+  [ $ZSH_VERSION  ] &&
+    read '?(Enter to exit)[0-9] ' chosen ||
+    read -p '(Enter to exit)[0-9] ' chosen
+  echo ''
   [[ $chosen = [0-9] ]] && activate $(echo $lsvenv | cut -d' ' -f$(expr $chosen + 1))
   unset lsvenv chosen
 }
@@ -62,7 +69,7 @@ installpy() {
       tar -zxf "$pvm/tmp.tgz" --directory "$pvm/python/" &&
       echo "Compiling Python, It may take a bit long depends of you computer..." &&
       cd "$pvm/python/Python-$1" &&
-      ./configure -s &&
+      ./configure -q &&
       make -s &&
       cd ~-
     ) || (
