@@ -17,7 +17,7 @@ newvenv() {
     echo -e "\033[93mCreate virtual env: \033[92m$1\033[93m\nChoose Python Version:"
     echo ''
     echo "0: $(python --version | tr ' ' '-') (Now)"
-    lspy=$(ls $pvm/python)
+    lspy=$(/bin/ls $pvm/python)
     echo $lspy | tr ' ' '\n' | awk '{ print NR":", $1 }'
     echo ''
     [ $ZSH_VERSION  ] &&
@@ -41,7 +41,7 @@ newvenv() {
 }
 
 list() {
-  [ -z "$1" ] && lsvenv=$(ls -t $pvm/venv | head -10) || lsvenv=$(ls -t $pvm/venv | grep ".*$1.*" | head -10)
+  [ -z "$1" ] && lsvenv=$(/bin/ls -t "$pvm/venv" | head -10) || lsvenv=$(/bin/ls -t "$pvm/venv" | grep ".*$1.*" | head -10)
   [ -z "$lsvenv" ] && echo -e "\033[93mVirtual Env Not Found\033[0m\n"  && return 1
   echo -e "\033[93mList of 10 virtual env\nChoose Virtual Env:"
   echo ''
@@ -80,7 +80,7 @@ installpy() {
       rm "$pvm/python/Python-$1" >/dev/null
     )
     rm "$pvm/tmp.tgz"
-    echo "Finish Download Python-$1"
+    echo "Finish Download Python-$1" && notify-send 'pvm' "Finish Download Python-$1"
   fi
 }
 
@@ -96,8 +96,8 @@ case "$1" in
   v|version|-v|--version) echo "pvm-1.0" ;;
   l|list)
     case $2 in
-      py|python) ls "$pvm/python" ;;
-      all) ls "$pvm/venv" ;;
+      py|python) /bin/ls "$pvm/python" ;;
+      all) /bin/ls "$pvm/venv" ;;
       *) list ;;
     esac
     ;;
